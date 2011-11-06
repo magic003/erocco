@@ -1,0 +1,5 @@
+*.swp
+erocco
+
+doc/*
+ebin/*.beam
