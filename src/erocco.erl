@@ -133,7 +133,7 @@ markdown(Sections,ParentID) ->
 <head>
   <title>?title</title>
   <meta http-equiv=\"content-type\" content=\"text/html; charset=UTF-8\">
-  <link rel=\"stylesheet\" media=\"all\" href=\"locco.css\"/>
+  <link rel=\"stylesheet\" media=\"all\" href=\"erocco.css\"/>
 </head>
 <body>
   <div id=\"container\">
@@ -170,10 +170,12 @@ markdown(Sections,ParentID) ->
   </div>
 </body>
 </html>").
+
+-define(OUTDIR,"docs/").
  
 generate_html(Source,HighlightedSections) ->
-    ok = filelib:ensure_dir("doc/"),
-    Filename = "doc/" ++ filename:basename(Source,filename:extension(Source)) ++ ".html",
+    ok = filelib:ensure_dir(?OUTDIR),
+    Filename = ?OUTDIR ++ filename:basename(Source,filename:extension(Source)) ++ ".html",
     file:write_file(Filename,re:replace(?HEADER,"\\?title",filename:basename(Source),[global,{return,list}])),
     lists:mapfoldr(fun({_,_,DocsHtml,CodeHtml},Index) ->
                     T = re:replace(?TABLE_ENTRY,"\\?index",integer_to_list(Index),[global,{return,list}]),
@@ -183,7 +185,9 @@ generate_html(Source,HighlightedSections) ->
                     {ok, Index + 1}
                 end,
         1, HighlightedSections),
-    file:write_file(Filename,?FOOTER,[append]).
+    file:write_file(Filename,?FOOTER,[append]),
+    file:copy("priv/erocco.css",?OUTDIR ++ "erocco.css").
+
 
 replace_specials(String) ->
     re:replace(re:replace(String,"&",?AMP,[global,{return,list}]),

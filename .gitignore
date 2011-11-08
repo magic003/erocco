@@ -1,5 +1,5 @@
 *.swp
 erocco
 
-doc/*
+docs/
 ebin/*.beam
