@@ -119,10 +119,23 @@ pygmentize_local(Lang,Code) -> {ok, Lang, Code}.
 
 pygmentize_webservice(Lang,Code) ->
     inets:start(),
-    httpc:set_options([{proxy, {{"localhost",8000},[]}}]),
+    case resolve_proxy() of 
+        {Host,Port} -> httpc:set_options([{proxy, {{Host,Port},[]}}]);
+        _ -> ok
+    end,
     {ok, {_,_,Body}} = httpc:request(post,{?PYGMENTIZE_URL,[],"application/x-www-form-urlencoded","lang=" ++ Lang#lang.name ++ "&code=" ++ url_encode(Code)},[],[]),
     inets:stop(),
     Body.
+
+resolve_proxy() ->
+    case os:getenv("http_proxy") of
+        false -> false;
+        Proxy ->
+            case re:split(Proxy,"//|:",[{return,list}]) of
+                [_,[],Host,Port] -> {Host,list_to_integer(Port)};
+                [_,[],Host] -> {Host,80}
+            end
+    end.
 
 markdown(Sections,ParentID) ->
     DocSections = [markdown:conv_utf8(DocsText) || {DocsText,_} <- Sections],
