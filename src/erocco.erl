@@ -27,7 +27,7 @@ generate_documentation(Source) ->
     Lang = get_language(Source),
     Lines = read_source(Source),
     Sections = parse(Lang,Lines),
-    HighlightedSections = highlight(Lang,Sections),
+    HighlightedSections = highlight(Lang,Sections,Source),
     generate_html(Source,HighlightedSections).
 
 parse(Lang, Lines) ->
@@ -47,10 +47,10 @@ parse(Lang, [L | Next], DocsText, CodeText, Sections) ->
         _ -> parse(Lang,Next,DocsText,[L|CodeText],Sections)
     end.
 
-highlight(Lang, Sections) ->
+highlight(Lang, Sections, Source) ->
     Code = string:join([CodeText || {_,CodeText} <- Sections],Lang#lang.divider_text),
     ParentID = self(),
-    PygmentID = spawn(fun() -> pygmentize(Lang,Code,ParentID) end), 
+    PygmentID = spawn(fun() -> pygmentize(Lang,Code,Source,ParentID) end), 
     MarkdownID = spawn(fun() -> markdown(Sections,ParentID) end),
     receive 
         {PygmentID, CodeHtml} -> CodeHtml
@@ -104,20 +104,20 @@ is_pygmentize() ->
         _ -> true
     end.
 
-pygmentize(Lang,Code,ParentID) ->
+pygmentize(Lang,Code,Source,ParentID) ->
     PygmentizeFun = case is_pygmentize() of
-        true -> fun pygmentize_local/2;
+        true -> fun pygmentize_local/3;
         false -> 
             io:format("WARNING: Pygments not found. Using webservice."),
-            fun pygmentize_webservice/2
+            fun pygmentize_webservice/3
     end,
-    CodeHighlighted = PygmentizeFun(Lang,Code),
+    CodeHighlighted = PygmentizeFun(Lang,Code,Source),
     ParentID ! {self(), CodeHighlighted}.
     
 
-pygmentize_local(Lang,Code) -> {ok, Lang, Code}.
+pygmentize_local(Lang,_,Source) -> os:cmd(?PYGMENTIZE ++ " -l " ++ Lang#lang.name ++ " -O encoding=utf-8 -f html " ++ Source).
 
-pygmentize_webservice(Lang,Code) ->
+pygmentize_webservice(Lang,Code,_) ->
     inets:start(),
     case resolve_proxy() of 
         {Host,Port} -> httpc:set_options([{proxy, {{Host,Port},[]}}]);
