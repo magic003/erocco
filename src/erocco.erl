@@ -27,7 +27,7 @@ generate_documentation(Source) ->
     Lang = get_language(Source),
     Lines = read_source(Source),
     Sections = parse(Lang,Lines),
-    HighlightedSections = highlight(Lang,Sections,Source),
+    HighlightedSections = highlight(Lang,Sections),
     generate_html(Source,HighlightedSections).
 
 parse(Lang, Lines) ->
@@ -47,10 +47,10 @@ parse(Lang, [L | Next], DocsText, CodeText, Sections) ->
         _ -> parse(Lang,Next,DocsText,[L|CodeText],Sections)
     end.
 
-highlight(Lang, Sections, Source) ->
+highlight(Lang, Sections) ->
     Code = string:join([CodeText || {_,CodeText} <- Sections],Lang#lang.divider_text),
     ParentID = self(),
-    PygmentID = spawn(fun() -> pygmentize(Lang,Code,Source,ParentID) end), 
+    PygmentID = spawn(fun() -> pygmentize(Lang,Code,ParentID) end), 
     MarkdownID = spawn(fun() -> markdown(Sections,ParentID) end),
     receive 
         {PygmentID, CodeHtml} -> CodeHtml
@@ -104,20 +104,30 @@ is_pygmentize() ->
         _ -> true
     end.
 
-pygmentize(Lang,Code,Source,ParentID) ->
+pygmentize(Lang,Code,ParentID) ->
     PygmentizeFun = case is_pygmentize() of
-        true -> fun pygmentize_local/3;
+        true -> fun pygmentize_local/2;
         false -> 
             io:format("WARNING: Pygments not found. Using webservice."),
-            fun pygmentize_webservice/3
+            fun pygmentize_webservice/2
     end,
-    CodeHighlighted = PygmentizeFun(Lang,Code,Source),
+    CodeHighlighted = PygmentizeFun(Lang,Code),
     ParentID ! {self(), CodeHighlighted}.
     
 
-pygmentize_local(Lang,_,Source) -> os:cmd(?PYGMENTIZE ++ " -l " ++ Lang#lang.name ++ " -O encoding=utf-8 -f html " ++ Source).
+pygmentize_local(Lang,Code) -> 
+    TmpFile = get_tmpfile(Lang),
+    file:write_file(TmpFile,Code),
+    Res = os:cmd(?PYGMENTIZE ++ " -l " ++ Lang#lang.name ++ " -O encoding=utf-8 -f html " ++ TmpFile),
+    file:delete(TmpFile),
+    Res.
 
-pygmentize_webservice(Lang,Code,_) ->
+get_tmpfile(Lang) ->
+    {MgSecs,Secs,MiSecs} = now(),
+    lists:flatten(io_lib:format("~p_~p_~p~s",
+                                [MgSecs,Secs,MiSecs,Lang#lang.extension])).
+
+pygmentize_webservice(Lang,Code) ->
     inets:start(),
     case resolve_proxy() of 
         {Host,Port} -> httpc:set_options([{proxy, {{Host,Port},[]}}]);
