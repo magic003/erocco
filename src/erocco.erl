@@ -1,3 +1,27 @@
+%%% **Erocco** is a quick-and-dirty, hundred-line-long, literate-programming-
+%%% style documentation generator. It produces HTML that displays your comments
+%%% alongside your code. Comments are passed through
+%%% [Markdown](http://daringfireball.net/projects/markdown/syntax), and code is
+%%% passed through [Pygments](http://pygments.org/) syntax highlighting.
+%%% This page is the result of running Erocco against its own source file.
+%%% 
+%%% If you install Erocco, you can run it from the command-line:
+%%%
+%%%     erocco src/*.erl (TODO support this wildcard syntax)
+%%%
+%%% ...will generate an HTML documentation page for each of the named source 
+%%% files, with a menu linking to other pages, saving it into a `docs` folder.
+%%% 
+%%% The [source for Erocco](http://github.com/magic003/erocco) is available on
+%%% GitHub, and released under the MIT license.
+%%% 
+%%% For its syntax highlighting Erocco relies on 
+%%% [Pygments](http://pyments.org/). It is called either through a local 
+%%% installation or remote [web service](http://pygments.appspot.com). As a 
+%%% markdown engine it ships with Gordon Guthrie's 
+%%% [erlmarkdown](http://github.com/gordonguthrie/erlmarkdown). Otherwise there
+%%% are no external dependencies.
+
 -module(erocco).
 -export([generate_documentation/1]).
 
@@ -23,6 +47,11 @@
 -define(AMP,":amp:").
 -define(SLASH, ":slash:").
 
+%% ### Main Documentation Generation Functions
+
+%% Generate the documentation for a source file by reading it in, splitting it
+%% up into comment/code sections, highlighting them for appropriate languages,
+%% and merging them into an HTML template.
 generate_documentation(Source) ->
     Lang = get_language(Source),
     Lines = read_source(Source),
@@ -30,6 +59,16 @@ generate_documentation(Source) ->
     HighlightedSections = highlight(Lang,Sections),
     generate_html(Source,HighlightedSections).
 
+%% Given a string list of source code, parse out each comment and the code that
+%% follows it, and create an individual section for it. Sections take the form:
+%% 
+%%      {
+%%        docs\_text: ...,
+%%        docs\_html: ...,
+%%        code\_text: ...,
+%%        code\_html: ...
+%%      }
+%% 
 parse(Lang, Lines) ->
     lists:reverse(parse(Lang, Lines, [], [], [])).
 
@@ -84,7 +123,7 @@ read_lines(IoDevice, Lines) ->
     end. 
 
 languages() ->
-    [ Lang#lang{comment_matcher="^\\s*" ++ Lang#lang.symbol ++ "\\s?",
+    [ Lang#lang{comment_matcher="^\\s*" ++ Lang#lang.symbol ++ "+\\s?",
                 comment_filter="(^#![/]|^\\s*#\\{)",
                 divider_text="\n" ++ Lang#lang.symbol ++ "DIVIDER\n",
                 divider_html="\\n*<span class=\"c1?\">" ++ Lang#lang.symbol ++ "DIVIDER<\\/span>\\n*"} 
@@ -200,7 +239,7 @@ generate_html(Source,HighlightedSections) ->
     ok = filelib:ensure_dir(?OUTDIR),
     Filename = ?OUTDIR ++ filename:basename(Source,filename:extension(Source)) ++ ".html",
     file:write_file(Filename,re:replace(?HEADER,"\\?title",filename:basename(Source),[global,{return,list}])),
-    lists:mapfoldr(fun({_,_,DocsHtml,CodeHtml},Index) ->
+    lists:mapfoldl(fun({_,_,DocsHtml,CodeHtml},Index) ->
                     T = re:replace(?TABLE_ENTRY,"\\?index",integer_to_list(Index),[global,{return,list}]),
                     T1 = re:replace(T,"\\?docs_html",replace_specials(DocsHtml),[global,{return,list}]),
                     T2 = re:replace(T1,"\\?code_html",replace_specials(CodeHtml),[global,{return,list}]),
