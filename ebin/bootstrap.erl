@@ -8,7 +8,7 @@ main(Args) ->
 	case zip:create("mem", Files, [memory]) of 
 		{ok, {"mem", ZipBin}} -> 
 			%% Archive was successfully created. Prefix that binary with our
-            		%% header and write to "hello" file
+            		%% header and write to target file
                     Header = list_to_binary(string:join(["#!/usr/bin/env escript\n%%! -noshell -noinput -escript main",MainModule,"\n"]," ")),
             		Script = <<Header/binary, ZipBin/binary>>,
             		case file:write_file(ScriptName, Script) of
