@@ -7,7 +7,7 @@
 %%% 
 %%% If you install Erocco, you can run it from the command-line:
 %%%
-%%%     erocco src/*.erl (TODO support this wildcard syntax)
+%%%     erocco src/*.erl 
 %%%
 %%% ...will generate an HTML documentation page for each of the named source 
 %%% files, with a menu linking to other pages, saving it into a `docs` folder.
@@ -64,6 +64,7 @@
 <body>
   <div id=\"container\">
     <div id=\"background\"></div>
+    ?jump
     <table cellpadding=\"0\" cellspacing=\"0\">
       <thead>
         <tr>
@@ -77,6 +78,20 @@
         </tr>
       </thead>
       <tbody>").
+
+-define(JUMP_START,"
+<div id=\"jump_to\">
+  Jump To \\&hellip;
+  <div id=\"jump_wrapper\">
+  <div id=\"jump_page\">").
+
+-define(JUMP,"
+  <a class=\"source\" href=\"?jump_html\">?jump_file</a>").
+
+-define(JUMP_END,"
+    </div>
+  </div>
+</div>").
 
 -define(TABLE_ENTRY,"
 <tr id=\"section-?index\">
@@ -107,16 +122,29 @@
 
 %% ### Main Documentation Generation Functions
 
+%% Generate the documentation for source files specified using a Unix
+%% wildcard style.
+generate_documentation(Sources) ->
+    case Sources of
+        [H] -> generate_documentation([H],"");
+        [H|N] ->
+            Jump = generate_jump([H|N],[],get_language(H)),
+            generate_documentation([H|N],Jump);
+        [] -> ok
+    end.
+
 %% Generate the documentation for a source file by reading it in, splitting it
 %% up into comment/code sections, highlighting them for appropriate languages,
 %% and merging them into an HTML template.
-generate_documentation(Source) ->
+generate_documentation([],_) -> ok;
+generate_documentation([Source|Next], Jump) ->
     Lang = get_language(Source),
     Lines = read_source(Source),
     Sections = parse(Lang,Lines),
     HighlightedSections = highlight(Lang,Sections),
-    generate_html(Source,HighlightedSections),
-    ok.
+    File = generate_html(Source,HighlightedSections,Jump),
+    io:format("File ~s is generated.~n",[File]),
+    generate_documentation(Next,Jump).
 
 %% Given lines of source code, parse out each comment and the code that
 %% follows it, and create an individual section for it. Sections take the form:
@@ -171,10 +199,13 @@ highlight(Lang, Sections) ->
 
 %% After the highlighting is done, the template is filled with documentation
 %% and code snippets and an HTML file is written.
-generate_html(Source,HighlightedSections) ->
+generate_html(Source,HighlightedSections,Jump) ->
     ok = filelib:ensure_dir(?OUTDIR),
     Filename = ?OUTDIR ++ filename:basename(Source,filename:extension(Source)) ++ ".html",
-    file:write_file(Filename,re:replace(?HEADER,"\\?title",filename:basename(Source),[global,{return,list}])),
+    file:write_file(Filename,re:replace(
+            re:replace(?HEADER,"\\?title",
+                filename:basename(Source),[global,{return,list}]),
+            "\\?jump",Jump,[global,{return,list}])),
     lists:mapfoldl(fun({_,_,DocsHtml,CodeHtml},Index) ->
                     T = re:replace(?TABLE_ENTRY,"\\?index",integer_to_list(Index),[global,{return,list}]),
                     T1 = re:replace(T,"\\?docs_html",replace_specials(DocsHtml),[global,{return,list}]),
@@ -184,7 +215,8 @@ generate_html(Source,HighlightedSections) ->
                 end,
         1, HighlightedSections),
     file:write_file(Filename,?FOOTER,[append]),
-    file:copy("priv/erocco.css",?OUTDIR ++ "erocco.css").
+    file:copy("priv/erocco.css",?OUTDIR ++ "erocco.css"),
+    Filename.
 
 %% ### Helpers
 
@@ -310,3 +342,14 @@ restore_specials(String) ->
     re:replace(re:replace(String,?SLASH,"\\",[global,{return,list}]),
                 ?AMP,"\\&",[global,{return,list}]).
 
+%% Generate the jump section of the html documentations.
+generate_jump([],JumpEntries,_) ->
+    ?JUMP_START ++ lists:flatten(JumpEntries) ++ ?JUMP_END;
+generate_jump([H|N],JumpEntries,Lang) ->
+    Basename = filename:basename(H,Lang#lang.extension),
+    JumpEntry = re:replace(
+                    re:replace(?JUMP,"\\?jump_html",
+                        Basename ++ ".html",
+                        [global,{return,list}]),
+                    "\\?jump_file",filename:basename(H),[global,{return,list}]),
+    generate_jump(N,[JumpEntry | JumpEntries],Lang).
