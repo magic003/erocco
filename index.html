@@ -8,6 +8,16 @@
 <body>
   <div id="container">
     <div id="background"></div>
+    
+<div id="jump_to">
+  Jump To &hellip;
+  <div id="jump_wrapper">
+  <div id="jump_page">
+  <a class="source" href="erocco_main.html">erocco_main.erl</a>
+  <a class="source" href="index.html">erocco.erl</a>
+    </div>
+  </div>
+</div>
     <table cellpadding="0" cellspacing="0">
       <thead>
         <tr>
@@ -34,7 +44,7 @@ passed through <a href="http://pygments.org/">Pygments</a> syntax highlighting.
 This page is the result of running Erocco against its own source file.</p>
 
 <p>If you install Erocco, you can run it from the command-line:</p>
-<pre><code>erocco src/*.erl (TODO support this wildcard syntax)
+<pre><code>erocco src/*.erl 
 </code></pre>
 
 <p>...will generate an HTML documentation page for each of the named source 
@@ -160,6 +170,7 @@ are no external dependencies.</p>
 <span class="s">&lt;body&gt;</span>
 <span class="s">  &lt;div id=</span><span class="se">\&quot;</span><span class="s">container</span><span class="se">\&quot;</span><span class="s">&gt;</span>
 <span class="s">    &lt;div id=</span><span class="se">\&quot;</span><span class="s">background</span><span class="se">\&quot;</span><span class="s">&gt;&lt;/div&gt;</span>
+<span class="s">    ?jump</span>
 <span class="s">    &lt;table cellpadding=</span><span class="se">\&quot;</span><span class="s">0</span><span class="se">\&quot;</span><span class="s"> cellspacing=</span><span class="se">\&quot;</span><span class="s">0</span><span class="se">\&quot;</span><span class="s">&gt;</span>
 <span class="s">      &lt;thead&gt;</span>
 <span class="s">        &lt;tr&gt;</span>
@@ -173,6 +184,20 @@ are no external dependencies.</p>
 <span class="s">        &lt;/tr&gt;</span>
 <span class="s">      &lt;/thead&gt;</span>
 <span class="s">      &lt;tbody&gt;&quot;</span><span class="p">).</span>
+
+<span class="p">-</span><span class="ni">define</span><span class="p">(</span><span class="no">JUMP_START</span><span class="p">,</span><span class="s">&quot;</span>
+<span class="s">&lt;div id=</span><span class="se">\&quot;</span><span class="s">jump_to</span><span class="se">\&quot;</span><span class="s">&gt;</span>
+<span class="s">  Jump To </span><span class="se">\\</span><span class="s">&amp;hellip;</span>
+<span class="s">  &lt;div id=</span><span class="se">\&quot;</span><span class="s">jump_wrapper</span><span class="se">\&quot;</span><span class="s">&gt;</span>
+<span class="s">  &lt;div id=</span><span class="se">\&quot;</span><span class="s">jump_page</span><span class="se">\&quot;</span><span class="s">&gt;&quot;</span><span class="p">).</span>
+
+<span class="p">-</span><span class="ni">define</span><span class="p">(</span><span class="no">JUMP</span><span class="p">,</span><span class="s">&quot;</span>
+<span class="s">  &lt;a class=</span><span class="se">\&quot;</span><span class="s">source</span><span class="se">\&quot;</span><span class="s"> href=</span><span class="se">\&quot;</span><span class="s">?jump_html</span><span class="se">\&quot;</span><span class="s">&gt;?jump_file&lt;/a&gt;&quot;</span><span class="p">).</span>
+
+<span class="p">-</span><span class="ni">define</span><span class="p">(</span><span class="no">JUMP_END</span><span class="p">,</span><span class="s">&quot;</span>
+<span class="s">    &lt;/div&gt;</span>
+<span class="s">  &lt;/div&gt;</span>
+<span class="s">&lt;/div&gt;&quot;</span><span class="p">).</span>
 
 <span class="p">-</span><span class="ni">define</span><span class="p">(</span><span class="no">TABLE_ENTRY</span><span class="p">,</span><span class="s">&quot;</span>
 <span class="s">&lt;tr id=</span><span class="se">\&quot;</span><span class="s">section-?index</span><span class="se">\&quot;</span><span class="s">&gt;</span>
@@ -234,24 +259,45 @@ are no external dependencies.</p>
   <div class="pilwrap">
     <a class="pilcrow" href="#section-13">&#182;</a>
   </div>
-  <p>Generate the documentation for a source file by reading it in, splitting it
-up into comment/code sections, highlighting them for appropriate languages,
-and merging them into an HTML template.</p>
+  <p>Generate the documentation for source files specified using a Unix
+wildcard style.</p>
 </td>
 <td class="code">
-  <div class="highlight"><pre><span class="nf">generate_documentation</span><span class="p">(</span><span class="nv">Source</span><span class="p">)</span> <span class="o">-&gt;</span>
-    <span class="nv">Lang</span> <span class="o">=</span> <span class="n">get_language</span><span class="p">(</span><span class="nv">Source</span><span class="p">),</span>
-    <span class="nv">Lines</span> <span class="o">=</span> <span class="n">read_source</span><span class="p">(</span><span class="nv">Source</span><span class="p">),</span>
-    <span class="nv">Sections</span> <span class="o">=</span> <span class="n">parse</span><span class="p">(</span><span class="nv">Lang</span><span class="p">,</span><span class="nv">Lines</span><span class="p">),</span>
-    <span class="nv">HighlightedSections</span> <span class="o">=</span> <span class="n">highlight</span><span class="p">(</span><span class="nv">Lang</span><span class="p">,</span><span class="nv">Sections</span><span class="p">),</span>
-    <span class="n">generate_html</span><span class="p">(</span><span class="nv">Source</span><span class="p">,</span><span class="nv">HighlightedSections</span><span class="p">),</span>
-    <span class="n">ok</span><span class="p">.</span></pre></div>
+  <div class="highlight"><pre><span class="nf">generate_documentation</span><span class="p">(</span><span class="nv">Sources</span><span class="p">)</span> <span class="o">-&gt;</span>
+    <span class="k">case</span> <span class="nv">Sources</span> <span class="k">of</span>
+        <span class="p">[</span><span class="nv">H</span><span class="p">]</span> <span class="o">-&gt;</span> <span class="n">generate_documentation</span><span class="p">([</span><span class="nv">H</span><span class="p">],</span><span class="s">&quot;&quot;</span><span class="p">);</span>
+        <span class="p">[</span><span class="nv">H</span><span class="p">|</span><span class="nv">N</span><span class="p">]</span> <span class="o">-&gt;</span>
+            <span class="nv">Jump</span> <span class="o">=</span> <span class="n">generate_jump</span><span class="p">([</span><span class="nv">H</span><span class="p">|</span><span class="nv">N</span><span class="p">],[],</span><span class="n">get_language</span><span class="p">(</span><span class="nv">H</span><span class="p">)),</span>
+            <span class="n">generate_documentation</span><span class="p">([</span><span class="nv">H</span><span class="p">|</span><span class="nv">N</span><span class="p">],</span><span class="nv">Jump</span><span class="p">);</span>
+        <span class="p">[]</span> <span class="o">-&gt;</span> <span class="n">ok</span>
+    <span class="k">end</span><span class="p">.</span></pre></div>
 </td>
 </tr>
 <tr id="section-14">
 <td class="docs">
   <div class="pilwrap">
     <a class="pilcrow" href="#section-14">&#182;</a>
+  </div>
+  <p>Generate the documentation for a source file by reading it in, splitting it
+up into comment/code sections, highlighting them for appropriate languages,
+and merging them into an HTML template.</p>
+</td>
+<td class="code">
+  <div class="highlight"><pre><span class="nf">generate_documentation</span><span class="p">([],_)</span> <span class="o">-&gt;</span> <span class="n">ok</span><span class="p">;</span>
+<span class="nf">generate_documentation</span><span class="p">([</span><span class="nv">Source</span><span class="p">|</span><span class="nv">Next</span><span class="p">],</span> <span class="nv">Jump</span><span class="p">)</span> <span class="o">-&gt;</span>
+    <span class="nv">Lang</span> <span class="o">=</span> <span class="n">get_language</span><span class="p">(</span><span class="nv">Source</span><span class="p">),</span>
+    <span class="nv">Lines</span> <span class="o">=</span> <span class="n">read_source</span><span class="p">(</span><span class="nv">Source</span><span class="p">),</span>
+    <span class="nv">Sections</span> <span class="o">=</span> <span class="n">parse</span><span class="p">(</span><span class="nv">Lang</span><span class="p">,</span><span class="nv">Lines</span><span class="p">),</span>
+    <span class="nv">HighlightedSections</span> <span class="o">=</span> <span class="n">highlight</span><span class="p">(</span><span class="nv">Lang</span><span class="p">,</span><span class="nv">Sections</span><span class="p">),</span>
+    <span class="nv">File</span> <span class="o">=</span> <span class="n">generate_html</span><span class="p">(</span><span class="nv">Source</span><span class="p">,</span><span class="nv">HighlightedSections</span><span class="p">,</span><span class="nv">Jump</span><span class="p">),</span>
+    <span class="nn">io</span><span class="p">:</span><span class="n">format</span><span class="p">(</span><span class="s">&quot;File </span><span class="si">~s</span><span class="s"> is generated.</span><span class="si">~n</span><span class="s">&quot;</span><span class="p">,[</span><span class="nv">File</span><span class="p">]),</span>
+    <span class="n">generate_documentation</span><span class="p">(</span><span class="nv">Next</span><span class="p">,</span><span class="nv">Jump</span><span class="p">).</span></pre></div>
+</td>
+</tr>
+<tr id="section-15">
+<td class="docs">
+  <div class="pilwrap">
+    <a class="pilcrow" href="#section-15">&#182;</a>
   </div>
   <p>Given lines of source code, parse out each comment and the code that
 follows it, and create an individual section for it. Sections take the form:</p>
@@ -283,10 +329,10 @@ follows it, and create an individual section for it. Sections take the form:</p>
     <span class="k">end</span><span class="p">.</span></pre></div>
 </td>
 </tr>
-<tr id="section-15">
+<tr id="section-16">
 <td class="docs">
   <div class="pilwrap">
-    <a class="pilcrow" href="#section-15">&#182;</a>
+    <a class="pilcrow" href="#section-16">&#182;</a>
   </div>
   <p>Loop through a table of split sections, pass the code through <strong>Pygments</strong>
 and convert the document from <strong>Markdown</strong> to HTML. Add docs_html and 
@@ -315,19 +361,22 @@ code_html to the sections</p>
         <span class="nv">Sections</span><span class="p">,</span><span class="nv">DocSections</span><span class="p">,</span><span class="nv">Fragments</span><span class="p">).</span></pre></div>
 </td>
 </tr>
-<tr id="section-16">
+<tr id="section-17">
 <td class="docs">
   <div class="pilwrap">
-    <a class="pilcrow" href="#section-16">&#182;</a>
+    <a class="pilcrow" href="#section-17">&#182;</a>
   </div>
   <p>After the highlighting is done, the template is filled with documentation
 and code snippets and an HTML file is written.</p>
 </td>
 <td class="code">
-  <div class="highlight"><pre><span class="nf">generate_html</span><span class="p">(</span><span class="nv">Source</span><span class="p">,</span><span class="nv">HighlightedSections</span><span class="p">)</span> <span class="o">-&gt;</span>
+  <div class="highlight"><pre><span class="nf">generate_html</span><span class="p">(</span><span class="nv">Source</span><span class="p">,</span><span class="nv">HighlightedSections</span><span class="p">,</span><span class="nv">Jump</span><span class="p">)</span> <span class="o">-&gt;</span>
     <span class="n">ok</span> <span class="o">=</span> <span class="nn">filelib</span><span class="p">:</span><span class="n">ensure_dir</span><span class="p">(</span><span class="no">?OUTDIR</span><span class="p">),</span>
     <span class="nv">Filename</span> <span class="o">=</span> <span class="no">?OUTDIR</span> <span class="o">++</span> <span class="nn">filename</span><span class="p">:</span><span class="n">basename</span><span class="p">(</span><span class="nv">Source</span><span class="p">,</span><span class="nn">filename</span><span class="p">:</span><span class="n">extension</span><span class="p">(</span><span class="nv">Source</span><span class="p">))</span> <span class="o">++</span> <span class="s">&quot;.html&quot;</span><span class="p">,</span>
-    <span class="nn">file</span><span class="p">:</span><span class="n">write_file</span><span class="p">(</span><span class="nv">Filename</span><span class="p">,</span><span class="nn">re</span><span class="p">:</span><span class="n">replace</span><span class="p">(</span><span class="no">?HEADER</span><span class="p">,</span><span class="s">&quot;</span><span class="se">\\</span><span class="s">?title&quot;</span><span class="p">,</span><span class="nn">filename</span><span class="p">:</span><span class="n">basename</span><span class="p">(</span><span class="nv">Source</span><span class="p">),[</span><span class="n">global</span><span class="p">,{</span><span class="n">return</span><span class="p">,</span><span class="n">list</span><span class="p">}])),</span>
+    <span class="nn">file</span><span class="p">:</span><span class="n">write_file</span><span class="p">(</span><span class="nv">Filename</span><span class="p">,</span><span class="nn">re</span><span class="p">:</span><span class="n">replace</span><span class="p">(</span>
+            <span class="nn">re</span><span class="p">:</span><span class="n">replace</span><span class="p">(</span><span class="no">?HEADER</span><span class="p">,</span><span class="s">&quot;</span><span class="se">\\</span><span class="s">?title&quot;</span><span class="p">,</span>
+                <span class="nn">filename</span><span class="p">:</span><span class="n">basename</span><span class="p">(</span><span class="nv">Source</span><span class="p">),[</span><span class="n">global</span><span class="p">,{</span><span class="n">return</span><span class="p">,</span><span class="n">list</span><span class="p">}]),</span>
+            <span class="s">&quot;</span><span class="se">\\</span><span class="s">?jump&quot;</span><span class="p">,</span><span class="nv">Jump</span><span class="p">,[</span><span class="n">global</span><span class="p">,{</span><span class="n">return</span><span class="p">,</span><span class="n">list</span><span class="p">}])),</span>
     <span class="nn">lists</span><span class="p">:</span><span class="n">mapfoldl</span><span class="p">(</span><span class="k">fun</span><span class="p">({_,_,</span><span class="nv">DocsHtml</span><span class="p">,</span><span class="nv">CodeHtml</span><span class="p">},</span><span class="nv">Index</span><span class="p">)</span> <span class="o">-&gt;</span>
                     <span class="nv">T</span> <span class="o">=</span> <span class="nn">re</span><span class="p">:</span><span class="n">replace</span><span class="p">(</span><span class="no">?TABLE_ENTRY</span><span class="p">,</span><span class="s">&quot;</span><span class="se">\\</span><span class="s">?index&quot;</span><span class="p">,</span><span class="nb">integer_to_list</span><span class="p">(</span><span class="nv">Index</span><span class="p">),[</span><span class="n">global</span><span class="p">,{</span><span class="n">return</span><span class="p">,</span><span class="n">list</span><span class="p">}]),</span>
                     <span class="nv">T1</span> <span class="o">=</span> <span class="nn">re</span><span class="p">:</span><span class="n">replace</span><span class="p">(</span><span class="nv">T</span><span class="p">,</span><span class="s">&quot;</span><span class="se">\\</span><span class="s">?docs_html&quot;</span><span class="p">,</span><span class="n">replace_specials</span><span class="p">(</span><span class="nv">DocsHtml</span><span class="p">),[</span><span class="n">global</span><span class="p">,{</span><span class="n">return</span><span class="p">,</span><span class="n">list</span><span class="p">}]),</span>
@@ -337,13 +386,14 @@ and code snippets and an HTML file is written.</p>
                 <span class="k">end</span><span class="p">,</span>
         <span class="mi">1</span><span class="p">,</span> <span class="nv">HighlightedSections</span><span class="p">),</span>
     <span class="nn">file</span><span class="p">:</span><span class="n">write_file</span><span class="p">(</span><span class="nv">Filename</span><span class="p">,</span><span class="no">?FOOTER</span><span class="p">,[</span><span class="n">append</span><span class="p">]),</span>
-    <span class="nn">file</span><span class="p">:</span><span class="n">copy</span><span class="p">(</span><span class="s">&quot;priv/erocco.css&quot;</span><span class="p">,</span><span class="no">?OUTDIR</span> <span class="o">++</span> <span class="s">&quot;erocco.css&quot;</span><span class="p">).</span></pre></div>
+    <span class="nn">file</span><span class="p">:</span><span class="n">copy</span><span class="p">(</span><span class="s">&quot;priv/erocco.css&quot;</span><span class="p">,</span><span class="no">?OUTDIR</span> <span class="o">++</span> <span class="s">&quot;erocco.css&quot;</span><span class="p">),</span>
+    <span class="nv">Filename</span><span class="p">.</span></pre></div>
 </td>
 </tr>
-<tr id="section-17">
+<tr id="section-18">
 <td class="docs">
   <div class="pilwrap">
-    <a class="pilcrow" href="#section-17">&#182;</a>
+    <a class="pilcrow" href="#section-18">&#182;</a>
   </div>
   <h3>Helpers</h3>
 </td>
@@ -351,10 +401,10 @@ and code snippets and an HTML file is written.</p>
   <div class="highlight"><pre></pre></div>
 </td>
 </tr>
-<tr id="section-18">
+<tr id="section-19">
 <td class="docs">
   <div class="pilwrap">
-    <a class="pilcrow" href="#section-18">&#182;</a>
+    <a class="pilcrow" href="#section-19">&#182;</a>
   </div>
   <p>Read a source file by lines.</p>
 </td>
@@ -372,10 +422,10 @@ and code snippets and an HTML file is written.</p>
     <span class="k">end</span><span class="p">.</span> </pre></div>
 </td>
 </tr>
-<tr id="section-19">
+<tr id="section-20">
 <td class="docs">
   <div class="pilwrap">
-    <a class="pilcrow" href="#section-19">&#182;</a>
+    <a class="pilcrow" href="#section-20">&#182;</a>
   </div>
   <p>Save docs_html and code_html to a table of split sections.</p>
 </td>
@@ -384,10 +434,10 @@ and code snippets and an HTML file is written.</p>
     <span class="p">[{</span><span class="nn">string</span><span class="p">:</span><span class="n">join</span><span class="p">(</span><span class="nn">lists</span><span class="p">:</span><span class="n">reverse</span><span class="p">(</span><span class="nv">DocsText</span><span class="p">),</span><span class="s">&quot;&quot;</span><span class="p">),</span><span class="nn">string</span><span class="p">:</span><span class="n">join</span><span class="p">(</span><span class="nn">lists</span><span class="p">:</span><span class="n">reverse</span><span class="p">(</span><span class="nv">CodeText</span><span class="p">),</span><span class="s">&quot;&quot;</span><span class="p">)}</span> <span class="p">|</span> <span class="nv">Sections</span><span class="p">].</span></pre></div>
 </td>
 </tr>
-<tr id="section-20">
+<tr id="section-21">
 <td class="docs">
   <div class="pilwrap">
-    <a class="pilcrow" href="#section-20">&#182;</a>
+    <a class="pilcrow" href="#section-21">&#182;</a>
   </div>
   <p>Get a list of supported languages, including file extension, name,
 comment symbol and etc.</p>
@@ -401,10 +451,10 @@ comment symbol and etc.</p>
         <span class="p">||</span> <span class="nv">Lang</span> <span class="o">&lt;-</span> <span class="no">?LANGS</span> <span class="p">].</span></pre></div>
 </td>
 </tr>
-<tr id="section-21">
+<tr id="section-22">
 <td class="docs">
   <div class="pilwrap">
-    <a class="pilcrow" href="#section-21">&#182;</a>
+    <a class="pilcrow" href="#section-22">&#182;</a>
   </div>
   <p>Get the language from the extenstion of a source file.</p>
 </td>
@@ -418,10 +468,10 @@ comment symbol and etc.</p>
 <span class="nf">get_language</span><span class="p">(</span><span class="nv">Ext</span><span class="p">,</span> <span class="p">[_</span> <span class="p">|</span> <span class="nv">T</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">get_language</span><span class="p">(</span><span class="nv">Ext</span><span class="p">,</span> <span class="nv">T</span><span class="p">).</span></pre></div>
 </td>
 </tr>
-<tr id="section-22">
+<tr id="section-23">
 <td class="docs">
   <div class="pilwrap">
-    <a class="pilcrow" href="#section-22">&#182;</a>
+    <a class="pilcrow" href="#section-23">&#182;</a>
   </div>
   <p>Test if Pygments is installed on the local machine.</p>
 </td>
@@ -433,10 +483,10 @@ comment symbol and etc.</p>
     <span class="k">end</span><span class="p">.</span></pre></div>
 </td>
 </tr>
-<tr id="section-23">
+<tr id="section-24">
 <td class="docs">
   <div class="pilwrap">
-    <a class="pilcrow" href="#section-23">&#182;</a>
+    <a class="pilcrow" href="#section-24">&#182;</a>
   </div>
   <p>Use Pygments to highlight the source code. It calls the executable file
 if it is installed locally. Otherwise, it invokes the web service.</p>
@@ -453,10 +503,10 @@ if it is installed locally. Otherwise, it invokes the web service.</p>
     <span class="nv">ParentID</span> <span class="o">!</span> <span class="p">{</span><span class="n">self</span><span class="p">(),</span> <span class="nv">CodeHighlighted</span><span class="p">}.</span></pre></div>
 </td>
 </tr>
-<tr id="section-24">
+<tr id="section-25">
 <td class="docs">
   <div class="pilwrap">
-    <a class="pilcrow" href="#section-24">&#182;</a>
+    <a class="pilcrow" href="#section-25">&#182;</a>
   </div>
   <p>Calls the Pygments executable to highlight the code. A temporary file
 which only contains the source code is created as the input.</p>
@@ -477,10 +527,10 @@ which only contains the source code is created as the input.</p>
                                 <span class="p">[</span><span class="nv">MgSecs</span><span class="p">,</span><span class="nv">Secs</span><span class="p">,</span><span class="nv">MiSecs</span><span class="p">,</span><span class="nv">Lang</span><span class="nl">#lang.extension</span><span class="p">])).</span></pre></div>
 </td>
 </tr>
-<tr id="section-25">
+<tr id="section-26">
 <td class="docs">
   <div class="pilwrap">
-    <a class="pilcrow" href="#section-25">&#182;</a>
+    <a class="pilcrow" href="#section-26">&#182;</a>
   </div>
   <p>Calls Pygments web service to highlight the source code. Proxy can
 be specified in environment variable <em>http</em><em>_</em><em>proxy</em>.</p>
@@ -511,10 +561,10 @@ be specified in environment variable <em>http</em><em>_</em><em>proxy</em>.</p>
     <span class="k">end</span><span class="p">.</span></pre></div>
 </td>
 </tr>
-<tr id="section-26">
+<tr id="section-27">
 <td class="docs">
   <div class="pilwrap">
-    <a class="pilcrow" href="#section-26">&#182;</a>
+    <a class="pilcrow" href="#section-27">&#182;</a>
   </div>
   <p>URL encode the content.</p>
 </td>
@@ -529,10 +579,10 @@ be specified in environment variable <em>http</em><em>_</em><em>proxy</em>.</p>
     <span class="p">[</span><span class="nv">H</span> <span class="p">|</span> <span class="n">url_encode</span><span class="p">(</span><span class="nv">T</span><span class="p">)].</span></pre></div>
 </td>
 </tr>
-<tr id="section-27">
+<tr id="section-28">
 <td class="docs">
   <div class="pilwrap">
-    <a class="pilcrow" href="#section-27">&#182;</a>
+    <a class="pilcrow" href="#section-28">&#182;</a>
   </div>
   <p>Use Gordon Guthrie's 
 <a href="http://github.com/gordonguthrie/erlmarkdown">erlmarkdown</a> to generate
@@ -544,10 +594,10 @@ the documentation.</p>
     <span class="nv">ParentID</span> <span class="o">!</span> <span class="p">{</span><span class="n">self</span><span class="p">(),</span> <span class="nv">DocSections</span><span class="p">}.</span></pre></div>
 </td>
 </tr>
-<tr id="section-28">
+<tr id="section-29">
 <td class="docs">
   <div class="pilwrap">
-    <a class="pilcrow" href="#section-28">&#182;</a>
+    <a class="pilcrow" href="#section-29">&#182;</a>
   </div>
   <p>Characters &amp; and \\ are special in Erlang regular expression. Replace
 and restore them with placeholders to escape them.</p>
@@ -559,7 +609,27 @@ and restore them with placeholders to escape them.</p>
 
 <span class="nf">restore_specials</span><span class="p">(</span><span class="nv">String</span><span class="p">)</span> <span class="o">-&gt;</span>
     <span class="nn">re</span><span class="p">:</span><span class="n">replace</span><span class="p">(</span><span class="nn">re</span><span class="p">:</span><span class="n">replace</span><span class="p">(</span><span class="nv">String</span><span class="p">,</span><span class="no">?SLASH</span><span class="p">,</span><span class="s">&quot;</span><span class="se">\\</span><span class="s">&quot;</span><span class="p">,[</span><span class="n">global</span><span class="p">,{</span><span class="n">return</span><span class="p">,</span><span class="n">list</span><span class="p">}]),</span>
-                <span class="no">?AMP</span><span class="p">,</span><span class="s">&quot;</span><span class="se">\\</span><span class="s">&amp;&quot;</span><span class="p">,[</span><span class="n">global</span><span class="p">,{</span><span class="n">return</span><span class="p">,</span><span class="n">list</span><span class="p">}]).</span>
+                <span class="no">?AMP</span><span class="p">,</span><span class="s">&quot;</span><span class="se">\\</span><span class="s">&amp;&quot;</span><span class="p">,[</span><span class="n">global</span><span class="p">,{</span><span class="n">return</span><span class="p">,</span><span class="n">list</span><span class="p">}]).</span></pre></div>
+</td>
+</tr>
+<tr id="section-30">
+<td class="docs">
+  <div class="pilwrap">
+    <a class="pilcrow" href="#section-30">&#182;</a>
+  </div>
+  <p>Generate the jump section of the html documentations.</p>
+</td>
+<td class="code">
+  <div class="highlight"><pre><span class="nf">generate_jump</span><span class="p">([],</span><span class="nv">JumpEntries</span><span class="p">,_)</span> <span class="o">-&gt;</span>
+    <span class="no">?JUMP_START</span> <span class="o">++</span> <span class="nn">lists</span><span class="p">:</span><span class="n">flatten</span><span class="p">(</span><span class="nv">JumpEntries</span><span class="p">)</span> <span class="o">++</span> <span class="no">?JUMP_END</span><span class="p">;</span>
+<span class="nf">generate_jump</span><span class="p">([</span><span class="nv">H</span><span class="p">|</span><span class="nv">N</span><span class="p">],</span><span class="nv">JumpEntries</span><span class="p">,</span><span class="nv">Lang</span><span class="p">)</span> <span class="o">-&gt;</span>
+    <span class="nv">Basename</span> <span class="o">=</span> <span class="nn">filename</span><span class="p">:</span><span class="n">basename</span><span class="p">(</span><span class="nv">H</span><span class="p">,</span><span class="nv">Lang</span><span class="nl">#lang.extension</span><span class="p">),</span>
+    <span class="nv">JumpEntry</span> <span class="o">=</span> <span class="nn">re</span><span class="p">:</span><span class="n">replace</span><span class="p">(</span>
+                    <span class="nn">re</span><span class="p">:</span><span class="n">replace</span><span class="p">(</span><span class="no">?JUMP</span><span class="p">,</span><span class="s">&quot;</span><span class="se">\\</span><span class="s">?jump_html&quot;</span><span class="p">,</span>
+                        <span class="nv">Basename</span> <span class="o">++</span> <span class="s">&quot;.html&quot;</span><span class="p">,</span>
+                        <span class="p">[</span><span class="n">global</span><span class="p">,{</span><span class="n">return</span><span class="p">,</span><span class="n">list</span><span class="p">}]),</span>
+                    <span class="s">&quot;</span><span class="se">\\</span><span class="s">?jump_file&quot;</span><span class="p">,</span><span class="nn">filename</span><span class="p">:</span><span class="n">basename</span><span class="p">(</span><span class="nv">H</span><span class="p">),[</span><span class="n">global</span><span class="p">,{</span><span class="n">return</span><span class="p">,</span><span class="n">list</span><span class="p">}]),</span>
+    <span class="n">generate_jump</span><span class="p">(</span><span class="nv">N</span><span class="p">,[</span><span class="nv">JumpEntry</span> <span class="p">|</span> <span class="nv">JumpEntries</span><span class="p">],</span><span class="nv">Lang</span><span class="p">).</span>
 
 </pre></div>
 </td>
